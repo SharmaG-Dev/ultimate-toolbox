@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Modern Toolbox Design System */
+
+@layer base {
+  :root {
+    /* Core Background & Text */
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    /* Card System */
+    --card: 240 10% 6%;
+    --card-foreground: 0 0% 98%;
+
+    /* Popover */
+    --popover: 240 10% 6%;
+    --popover-foreground: 0 0% 98%;
+
+    /* Primary Brand Colors */
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 98%;
+    --primary-glow: 217 91% 70%;
+
+    /* Secondary Colors */
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 0 0% 98%;
+
+    /* Muted Colors */
+    --muted: 240 6% 10%;
+    --muted-foreground: 240 5% 65%;
+
+    /* Accent Colors */
+    --accent: 240 6% 10%;
+    --accent-foreground: 0 0% 98%;
+
+    /* Status Colors */
+    --destructive: 0 62% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    /* Border & Input */
+    --border: 240 6% 20%;
+    --input: 240 6% 20%;
+    --ring: 217 91% 60%;
+
+    /* Tool Category Colors */
+    --file-tools: 262 83% 58%;
+    --image-tools: 142 71% 45%;
+    --audio-video: 338 76% 59%;
+    --text-tools: 38 92% 50%;
+    --online-tools: 199 89% 48%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%), hsl(262 83% 58%));
+    --gradient-secondary: linear-gradient(135deg, hsl(240 6% 10%), hsl(240 4% 16%));
+    --gradient-card: linear-gradient(135deg, hsl(240 10% 6%), hsl(240 6% 10%));
+    --gradient-hero: linear-gradient(135deg, hsl(217 91% 60% / 0.1), hsl(262 83% 58% / 0.1));
+
+    /* Shadows */
+    --shadow-primary: 0 10px 30px -10px hsl(217 91% 60% / 0.3);
+    --shadow-card: 0 4px 20px -2px hsl(240 10% 3.9% / 0.5);
+    --shadow-glow: 0 0 40px hsl(217 91% 70% / 0.4);
+
+    /* Border Radius */
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+    
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
