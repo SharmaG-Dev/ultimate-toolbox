@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { QrCode, Download, Wifi, CreditCard, Phone, Mail, MapPin, Link as LinkIcon } from "lucide-react";
+import { QrCode, Download, Wifi, CreditCard, Phone, Mail, MapPin, Link as LinkIcon, Send, Clock, Construction } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import QRCode from "qrcode";
 
@@ -155,7 +155,6 @@ export default function QrGenerator() {
     try {
       setIsGenerating(true);
       
-      // Wait a bit for canvas to be ready if needed
       let attempts = 0;
       const maxAttempts = 10;
       
@@ -169,7 +168,7 @@ export default function QrGenerator() {
       }
 
       const data = generateQRData();
-      console.log("Generated QR Data:", data); // Debug log
+      console.log("Generated QR Data:", data);
 
       const options: QROptions = {
         errorCorrectionLevel: errorCorrection as "low" | "medium" | "quartile" | "high",
@@ -183,25 +182,21 @@ export default function QrGenerator() {
         width: parseInt(size),
       };
 
-      // Clear previous QR code
       setQrImageUrl("");
       
       const canvas = canvasRef.current;
       
-      // Clear canvas first
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
       }
 
-      console.log("Generating QR code on canvas..."); // Debug log
+      console.log("Generating QR code on canvas...");
       
-      // Generate QR code on canvas
       await QRCode.toCanvas(canvas, data, options);
       
-      console.log("QR code generated successfully"); // Debug log
+      console.log("QR code generated successfully");
       
-      // Get image data URL
       const imageUrl = canvas.toDataURL("image/png");
       setQrImageUrl(imageUrl);
 
@@ -252,7 +247,6 @@ export default function QrGenerator() {
         if (format === "jpg") {
           const canvas = canvasRef.current;
           if (canvas) {
-            // Convert to JPG with white background
             const tempCanvas = document.createElement("canvas");
             const tempCtx = tempCanvas.getContext("2d");
             tempCanvas.width = canvas.width;
@@ -291,6 +285,7 @@ export default function QrGenerator() {
       text: "Text",
       url: "URL",
       upi: "UPI Payment",
+      upiRequest: "Request UPI Payment",
       wifi: "WiFi",
       contact: "Contact",
       sms: "SMS",
@@ -305,6 +300,7 @@ export default function QrGenerator() {
       text: <QrCode className="w-4 h-4" />,
       url: <LinkIcon className="w-4 h-4" />,
       upi: <CreditCard className="w-4 h-4" />,
+      upiRequest: <Send className="w-4 h-4" />,
       wifi: <Wifi className="w-4 h-4" />,
       contact: <Phone className="w-4 h-4" />,
       sms: <Phone className="w-4 h-4" />,
@@ -343,6 +339,99 @@ export default function QrGenerator() {
 
   const renderQRTypeForm = () => {
     switch (qrType) {
+      case "upiRequest":
+        return (
+          <div className="space-y-6">
+            {/* Coming Soon Notice */}
+            <div className="p-6 bg-dark dark:from-orange-950/20 dark:to-yellow-950/20 rounded-lg border border-orange-200 dark:border-orange-800">
+              <div className="flex items-center gap-3 mb-3">
+                <Construction className="w-6 h-6 text-orange-600 dark:text-orange-400" />
+                <h3 className="font-semibold text-orange-900 dark:text-orange-100">Feature Under Development</h3>
+              </div>
+              <div className="space-y-2">
+                <p className="text-orange-800 dark:text-orange-200">
+                  <strong>UPI Payment Request</strong> feature is currently under development and will be available soon!
+                </p>
+                <p className="text-sm text-orange-700 dark:text-orange-300">
+                  This feature will allow you to send payment requests directly to users' UPI apps with real-time notifications.
+                </p>
+                <div className="flex items-center gap-2 mt-3 text-sm text-orange-600 dark:text-orange-400">
+                  <Clock className="w-4 h-4" />
+                  <span>Expected release: Coming Soon</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Disabled Form Preview */}
+            <div className="opacity-50 pointer-events-none space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="disabled-receiver">Your UPI ID (Receiver) *</Label>
+                  <Input
+                    id="disabled-receiver"
+                    placeholder="your.upi@bank"
+                    disabled
+                    value="example@paytm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="disabled-payer">Payer UPI ID (From) *</Label>
+                  <Input
+                    id="disabled-payer"
+                    placeholder="payer.upi@bank"
+                    disabled
+                    value="payer@phonepe"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="disabled-amount">Amount (₹) *</Label>
+                  <Input
+                    id="disabled-amount"
+                    type="number"
+                    placeholder="100.00"
+                    disabled
+                    value="500"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Request Expires In</Label>
+                  <Select disabled>
+                    <SelectTrigger>
+                      <SelectValue placeholder="24 Hours" />
+                    </SelectTrigger>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="disabled-note">Payment Description</Label>
+                <Textarea
+                  id="disabled-note"
+                  placeholder="What is this payment for?"
+                  disabled
+                  value="Lunch payment"
+                  className="min-h-20"
+                />
+              </div>
+              <Button disabled className="w-full" size="lg">
+                Send Payment Request (Coming Soon)
+              </Button>
+            </div>
+
+            <div className="p-4 bg-dark dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">What to expect:</h4>
+              <ul className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+                <li>• Real-time UPI ID verification with account holder names</li>
+                <li>• Direct payment request notifications to recipient's UPI app</li>
+                <li>• Customizable request expiry times</li>
+                <li>• Payment status tracking and notifications</li>
+                <li>• Integration with major UPI payment gateways</li>
+              </ul>
+            </div>
+          </div>
+        );
+
       case "upi":
         return (
           <div className="space-y-4">
@@ -636,10 +725,14 @@ export default function QrGenerator() {
           </CardHeader>
           <CardContent>
             <Tabs value={qrType} onValueChange={setQrType} className="space-y-6">
-              <TabsList className="grid grid-cols-4 lg:grid-cols-8 gap-1">
+              <TabsList className="grid grid-cols-5 lg:grid-cols-9 gap-1">
                 <TabsTrigger value="text" className="text-xs">Text</TabsTrigger>
                 <TabsTrigger value="url" className="text-xs">URL</TabsTrigger>
                 <TabsTrigger value="upi" className="text-xs">UPI Pay</TabsTrigger>
+                <TabsTrigger value="upiRequest" className="text-xs relative">
+                  Request UPI
+                  <span className="absolute -top-1 -right-1 w-2 h-2 bg-orange-500 rounded-full"></span>
+                </TabsTrigger>
                 <TabsTrigger value="wifi" className="text-xs">WiFi</TabsTrigger>
                 <TabsTrigger value="contact" className="text-xs">Contact</TabsTrigger>
                 <TabsTrigger value="sms" className="text-xs">SMS</TabsTrigger>
@@ -650,86 +743,90 @@ export default function QrGenerator() {
               <TabsContent value={qrType} className="space-y-6">
                 {renderQRTypeForm()}
 
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Customization Options</h3>
-                  <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="space-y-2">
-                      <Label>Size</Label>
-                      <Select value={size} onValueChange={setSize}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="128">128x128 px</SelectItem>
-                          <SelectItem value="256">256x256 px</SelectItem>
-                          <SelectItem value="512">512x512 px</SelectItem>
-                          <SelectItem value="1024">1024x1024 px</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Error Correction</Label>
-                      <Select value={errorCorrection} onValueChange={setErrorCorrection}>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low (7%)</SelectItem>
-                          <SelectItem value="medium">Medium (15%)</SelectItem>
-                          <SelectItem value="quartile">Quartile (25%)</SelectItem>
-                          <SelectItem value="high">High (30%)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Foreground Color</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={darkColor}
-                          onChange={(e) => setDarkColor(e.target.value)}
-                          className="w-12 h-8 p-0 border-0"
-                        />
-                        <Input
-                          value={darkColor}
-                          onChange={(e) => setDarkColor(e.target.value)}
-                          className="flex-1"
-                        />
+                {qrType !== "upiRequest" && (
+                  <>
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium">Customization Options</h3>
+                      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label>Size</Label>
+                          <Select value={size} onValueChange={setSize}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="128">128x128 px</SelectItem>
+                              <SelectItem value="256">256x256 px</SelectItem>
+                              <SelectItem value="512">512x512 px</SelectItem>
+                              <SelectItem value="1024">1024x1024 px</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Error Correction</Label>
+                          <Select value={errorCorrection} onValueChange={setErrorCorrection}>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="low">Low (7%)</SelectItem>
+                              <SelectItem value="medium">Medium (15%)</SelectItem>
+                              <SelectItem value="quartile">Quartile (25%)</SelectItem>
+                              <SelectItem value="high">High (30%)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Foreground Color</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={darkColor}
+                              onChange={(e) => setDarkColor(e.target.value)}
+                              className="w-12 h-8 p-0 border-0"
+                            />
+                            <Input
+                              value={darkColor}
+                              onChange={(e) => setDarkColor(e.target.value)}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Background Color</Label>
+                          <div className="flex gap-2">
+                            <Input
+                              type="color"
+                              value={lightColor}
+                              onChange={(e) => setLightColor(e.target.value)}
+                              className="w-12 h-8 p-0 border-0"
+                            />
+                            <Input
+                              value={lightColor}
+                              onChange={(e) => setLightColor(e.target.value)}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Background Color</Label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="color"
-                          value={lightColor}
-                          onChange={(e) => setLightColor(e.target.value)}
-                          className="w-12 h-8 p-0 border-0"
-                        />
-                        <Input
-                          value={lightColor}
-                          onChange={(e) => setLightColor(e.target.value)}
-                          className="flex-1"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
 
-                <Button 
-                  onClick={handleGenerate}
-                  disabled={isGenerating || !canvasReady}
-                  className="w-full"
-                  size="lg"
-                >
-                  {isGenerating ? "Generating..." : canvasReady ? `Generate ${getQRTypeLabel(qrType)} QR Code` : "Loading Canvas..."}
-                </Button>
+                    <Button 
+                      onClick={handleGenerate}
+                      disabled={isGenerating || !canvasReady}
+                      className="w-full"
+                      size="lg"
+                    >
+                      {isGenerating ? "Generating..." : canvasReady ? `Generate ${getQRTypeLabel(qrType)} QR Code` : "Loading Canvas..."}
+                    </Button>
+                  </>
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
 
-        {/* Canvas Container - Always present to prevent ref issues */}
+        {/* Canvas Container */}
         <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
           <canvas 
             ref={canvasRef}
@@ -739,14 +836,14 @@ export default function QrGenerator() {
           />
         </div>
 
-        {qrImageUrl && (
+        {qrImageUrl && qrType !== "upiRequest" && (
           <Card>
             <CardHeader>
               <CardTitle>Generated QR Code</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="text-center">
-                <div className="inline-block p-4 bg-white rounded-lg border shadow-sm">
+                <div className="inline-block p-4 bg-dark rounded-lg border shadow-sm">
                   <img 
                     src={qrImageUrl} 
                     alt="Generated QR Code"

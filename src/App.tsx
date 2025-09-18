@@ -35,6 +35,7 @@ import WordCounter from "./pages/tools/WordCounter";
 // Online Tools
 import CurrencyConverter from "./pages/tools/CurrencyConverter";
 import UnitConverter from "./pages/tools/UnitConverter";
+import WordToPdf from "./pages/tools/WordToPdf";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => (
           <Route path="/tools/images-to-pdf" element={<ImagesToPdf />} />
           <Route path="/tools/merge-pdfs" element={<MergePdfs />} />
           <Route path="/tools/split-pdf" element={<SplitPdf />} />
+          <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
           
           {/* Image Tool Routes */}
           <Route path="/tools/image-format-converter" element={<ImageFormatConverter />} />

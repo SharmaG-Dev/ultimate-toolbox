@@ -49,7 +49,8 @@ export const ToolCard = ({
       "Text Case Converter": "/tools/text-case-converter",
       "Word Counter": "/tools/word-counter",
       "Currency Converter": "/tools/currency-converter",
-      "Unit Converter": "/tools/unit-converter"
+      "Unit Converter": "/tools/unit-converter",
+      "Word to PDF":"/tools/word-to-pdf"
     };
     return routeMap[title];
   };

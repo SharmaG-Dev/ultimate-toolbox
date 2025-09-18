@@ -5,6 +5,8 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import jsPDF from "jspdf";
 
 export default function ImagesToPdf() {
   const [files, setFiles] = useState<File[]>([]);
@@ -13,34 +15,76 @@ export default function ImagesToPdf() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFiles = Array.from(e.target.files || []);
-    const imageFiles = selectedFiles.filter(file => file.type.startsWith('image/'));
-    
+    const imageFiles = selectedFiles.filter((file) =>
+      file.type.startsWith("image/")
+    );
+
     if (imageFiles.length !== selectedFiles.length) {
       toast({
         title: "Some files skipped",
         description: "Only image files are accepted",
-        variant: "destructive"
+        variant: "destructive",
       });
     }
-    
-    setFiles(prev => [...prev, ...imageFiles]);
+
+    setFiles((prev) => [...prev, ...imageFiles]);
   };
 
   const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
+    setFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDragEnd = (result: any) => {
+    if (!result.destination) return;
+    const reordered = Array.from(files);
+    const [moved] = reordered.splice(result.source.index, 1);
+    reordered.splice(result.destination.index, 0, moved);
+    setFiles(reordered);
   };
 
   const handleConvert = async () => {
     if (files.length === 0) return;
-    
+
     setIsConverting(true);
-    setTimeout(() => {
-      setIsConverting(false);
-      toast({
-        title: "PDF Created",
-        description: `Successfully combined ${files.length} images into PDF`
+
+    const pdf = new jsPDF();
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const imgData = await readFileAsDataURL(file);
+
+      const img = new Image();
+      img.src = imgData;
+
+      await new Promise((resolve) => {
+        img.onload = () => {
+          const imgWidth = pdf.internal.pageSize.getWidth();
+          const imgHeight =
+            (img.height * imgWidth) / img.width;
+
+          if (i > 0) pdf.addPage();
+          pdf.addImage(img, "JPEG", 0, 0, imgWidth, imgHeight);
+          resolve(true);
+        };
       });
-    }, 2000);
+    }
+
+    pdf.save("images.pdf");
+
+    setIsConverting(false);
+    toast({
+      title: "PDF Created",
+      description: `Successfully combined ${files.length} images into PDF`,
+    });
+  };
+
+  const readFileAsDataURL = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
   return (
@@ -55,7 +99,9 @@ export default function ImagesToPdf() {
               <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Upload Images</h3>
-                <p className="text-muted-foreground">Select multiple images to combine into PDF</p>
+                <p className="text-muted-foreground">
+                  Select multiple images to combine into PDF
+                </p>
               </div>
               <Input
                 type="file"
@@ -68,35 +114,65 @@ export default function ImagesToPdf() {
 
             {files.length > 0 && (
               <div className="space-y-4">
-                <h4 className="font-medium">Selected Images ({files.length})</h4>
-                <div className="space-y-2 max-h-60 overflow-y-auto">
-                  {files.map((file, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted rounded-lg">
-                      <div>
-                        <p className="text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {(file.size / 1024 / 1024).toFixed(2)} MB
-                        </p>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
+                <h4 className="font-medium">
+                  Reorder Images by Drag & Drop ({files.length})
+                </h4>
+                <DragDropContext onDragEnd={handleDragEnd}>
+                  <Droppable droppableId="files">
+                    {(provided) => (
+                      <div
+                        ref={provided.innerRef}
+                        {...provided.droppableProps}
+                        className="space-y-2 max-h-60 overflow-y-auto"
                       >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
+                        {files.map((file, index) => (
+                          <Draggable
+                            key={file.name + index}
+                            draggableId={file.name + index}
+                            index={index}
+                          >
+                            {(provided) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                                className="flex items-center justify-between p-3 bg-muted rounded-lg"
+                              >
+                                <div>
+                                  <p className="text-sm font-medium">
+                                    {file.name}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                                  </p>
+                                </div>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => removeFile(index)}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </Draggable>
+                        ))}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
               </div>
             )}
 
-            <Button 
+            <Button
               onClick={handleConvert}
               disabled={files.length === 0 || isConverting}
               className="w-full"
             >
-              {isConverting ? "Creating PDF..." : `Create PDF from ${files.length} images`}
+              {isConverting
+                ? "Creating PDF..."
+                : `Create PDF from ${files.length} images`}
             </Button>
           </div>
         </Card>
