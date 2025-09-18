@@ -6,8 +6,7 @@ import {
   Eraser, 
   Palette, 
   RotateCcw,
-  RefreshCw,
-  Scissors
+
 } from "lucide-react";
 
 const imageTools = [
