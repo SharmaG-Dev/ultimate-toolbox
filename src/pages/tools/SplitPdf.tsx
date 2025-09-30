@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Upload, X } from "lucide-react";
+import { Upload, X, RotateCcw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SplitPdf() {
@@ -37,6 +37,30 @@ export default function SplitPdf() {
         variant: "destructive",
       });
     }
+  };
+
+  // Clear all function to reset the component
+  const handleClearAll = () => {
+    // Revoke existing blob URLs to prevent memory leaks
+    splitFiles.forEach(({ url }) => URL.revokeObjectURL(url));
+    
+    // Reset all state variables
+    setFile(null);
+    setSplitMode("pages");
+    setPageRanges("");
+    setIsSplitting(false);
+    setSplitFiles([]);
+    
+    // Clear file input
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = "";
+    }
+    
+    toast({
+      title: "Cleared",
+      description: "All data has been cleared successfully",
+    });
   };
 
   // Parse page range input string into array of [start, end] tuples or singles
@@ -171,11 +195,24 @@ export default function SplitPdf() {
             {file && (
               <div className="space-y-6">
                 <div className="p-4 bg-muted rounded-lg">
-                  <p className="font-medium">Selected file:</p>
-                  <p className="text-sm text-muted-foreground">{file.name}</p>
-                  <p className="text-sm text-muted-foreground">
-                    Size: {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">Selected file:</p>
+                      <p className="text-sm text-muted-foreground">{file.name}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Size: {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearAll}
+                      className="flex items-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                      Clear All
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -224,7 +261,18 @@ export default function SplitPdf() {
             {/* Preview and Download section */}
             {splitFiles.length > 0 && (
               <div className="mt-6 space-y-4">
-                <h4 className="font-medium">Split PDF Files</h4>
+                <div className="flex justify-between items-center">
+                  <h4 className="font-medium">Split PDF Files</h4>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleClearAll}
+                    className="flex items-center gap-2"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Clear All
+                  </Button>
+                </div>
                 <div className="max-h-96 overflow-y-auto space-y-4">
                   {splitFiles.map(({ url, name }, idx) => (
                     <div
