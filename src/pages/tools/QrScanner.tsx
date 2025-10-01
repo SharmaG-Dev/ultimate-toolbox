@@ -28,7 +28,7 @@ export default function QrScanner() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [qrType, setQrType] = useState<string>("");
-  const [isProcessingQR, setIsProcessingQR] = useState(false); 
+  const [isProcessingQR, setIsProcessingQR] = useState(false); // New flag to prevent multiple scans
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -485,7 +485,7 @@ export default function QrScanner() {
                 </Button>
               </div>
               
-              <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="p-4 bg-dark text-light dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
                 <p className="text-sm break-all font-mono">{scannedData}</p>
               </div>
 
