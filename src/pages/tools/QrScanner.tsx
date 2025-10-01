@@ -28,6 +28,7 @@ export default function QrScanner() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [qrType, setQrType] = useState<string>("");
+  const [isProcessingQR, setIsProcessingQR] = useState(false); // New flag to prevent multiple scans
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -101,6 +102,7 @@ export default function QrScanner() {
       
       setIsCameraActive(true);
       setIsScanning(true);
+      setIsProcessingQR(false); // Reset processing flag
       
       // Start scanning loop
       scanIntervalRef.current = window.setInterval(scanFrame, 100);
@@ -119,29 +121,66 @@ export default function QrScanner() {
     }
   };
 
-  // Stop camera
+  // Stop camera completely
   const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-    }
-    
+    // Stop the scanning interval first
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
     }
     
+    // Stop all media tracks
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => {
+        track.stop();
+      });
+      streamRef.current = null;
+    }
+    
+    // Clear video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
     
     setIsCameraActive(false);
     setIsScanning(false);
+    setIsProcessingQR(false);
+  };
+
+  // Process detected QR code
+  const processDetectedQR = async (qrData: string) => {
+    // Prevent processing the same QR multiple times
+    if (isProcessingQR) return;
+    
+    setIsProcessingQR(true);
+    
+    // Stop camera immediately after detection
+    stopCamera();
+    
+    const type = detectQRType(qrData);
+    setScannedData(qrData);
+    setQrType(type);
+    
+    // Add to history if not already present
+    setScanHistory(prev => {
+      if (!prev.includes(qrData)) {
+        return [qrData, ...prev.slice(0, 9)]; // Keep last 10
+      }
+      return prev;
+    });
+    
+    toast({
+      title: `${type} QR Code Detected!`,
+      description: "Camera stopped. QR code successfully scanned.",
+    });
   };
 
   // Scan current video frame
   const scanFrame = async () => {
-    if (!videoRef.current || !canvasRef.current || !isCameraActive) return;
+    // Don't scan if already processing a QR code
+    if (!videoRef.current || !canvasRef.current || !isCameraActive || isProcessingQR) {
+      return;
+    }
     
     const video = videoRef.current;
     const canvas = canvasRef.current;
@@ -160,25 +199,9 @@ export default function QrScanner() {
           const jsQR = (await import('jsqr')).default;
           const code = jsQR(imageData.data, imageData.width, imageData.height);
           
-          if (code && code.data) {
-            const type = detectQRType(code.data);
-            setScannedData(code.data);
-            setQrType(type);
-            
-            // Add to history if not already present
-            setScanHistory(prev => {
-              if (!prev.includes(code.data)) {
-                return [code.data, ...prev.slice(0, 9)]; // Keep last 10
-              }
-              return prev;
-            });
-            
-            stopCamera(); // Stop after successful scan
-            
-            toast({
-              title: `${type} QR Code Scanned`,
-              description: "Successfully decoded QR code content"
-            });
+          if (code && code.data && code.data.trim() !== '') {
+            // Process the detected QR code
+            await processDetectedQR(code.data);
           }
         } catch (error) {
           console.error('Error scanning frame:', error);
@@ -272,6 +295,14 @@ export default function QrScanner() {
     }
   };
 
+  // Clear current scan and start fresh
+  const startNewScan = () => {
+    setScannedData("");
+    setQrType("");
+    setIsProcessingQR(false);
+    startCamera();
+  };
+
   const copyToClipboard = () => {
     navigator.clipboard.writeText(scannedData);
     toast({
@@ -363,6 +394,13 @@ export default function QrScanner() {
                     </div>
                   </div>
                 )}
+                {isCameraActive && isScanning && (
+                  <div className="absolute top-4 left-4 right-4">
+                    <div className="bg-black/50 text-white px-3 py-1 rounded-full text-sm text-center">
+                      🔍 Scanning for QR codes...
+                    </div>
+                  </div>
+                )}
               </div>
               
               <div className="flex gap-2">
@@ -435,10 +473,16 @@ export default function QrScanner() {
         {scannedData && (
           <Card className="p-6 mt-6">
             <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                {getTypeIcon(qrType)}
-                <h3 className="font-semibold text-green-600">QR Code Detected</h3>
-                <Badge variant="secondary">{qrType}</Badge>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {getTypeIcon(qrType)}
+                  <h3 className="font-semibold text-green-600">QR Code Detected</h3>
+                  <Badge variant="secondary">{qrType}</Badge>
+                </div>
+                <Button onClick={startNewScan} variant="outline" size="sm">
+                  <Camera className="w-4 h-4 mr-2" />
+                  Scan New QR
+                </Button>
               </div>
               
               <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
