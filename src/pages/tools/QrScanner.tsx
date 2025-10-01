@@ -28,7 +28,7 @@ export default function QrScanner() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [qrType, setQrType] = useState<string>("");
-  const [isProcessingQR, setIsProcessingQR] = useState(false); // New flag to prevent multiple scans
+  const [isProcessingQR, setIsProcessingQR] = useState(false); 
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
