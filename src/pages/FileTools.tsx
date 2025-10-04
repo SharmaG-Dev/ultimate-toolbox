@@ -40,7 +40,7 @@ const fileTools = [
     title: "Word to PDF",
     description: "Convert Word documents to PDF format",
     icon: FileText,
-    comingSoon: true
+    comingSoon: false
   },
   {
     title: "PDF to Word",

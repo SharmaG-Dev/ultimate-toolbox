@@ -28,7 +28,8 @@ export default function QrScanner() {
   const [isCameraActive, setIsCameraActive] = useState(false);
   const [scanHistory, setScanHistory] = useState<string[]>([]);
   const [qrType, setQrType] = useState<string>("");
-  const [isProcessingQR, setIsProcessingQR] = useState(false); // New flag to prevent multiple scans
+  const [isProcessingQR, setIsProcessingQR] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null); // New state for captured image
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -81,12 +82,35 @@ export default function QrScanner() {
     return wifiInfo;
   };
 
+  // Capture current video frame as image
+  const captureVideoFrame = (): string | null => {
+    if (!videoRef.current || !canvasRef.current) return null;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext('2d');
+
+    if (video.readyState === video.HAVE_ENOUGH_DATA && ctx) {
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw the current video frame to canvas
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to data URL (base64 image)
+      return canvas.toDataURL('image/jpeg', 0.9);
+    }
+    
+    return null;
+  };
+
   // Start camera for live scanning
   const startCamera = async () => {
     try {
       const constraints = {
         video: {
-          facingMode: { ideal: "environment" }, // Prefer rear camera
+          facingMode: { ideal: "environment" },
           width: { ideal: 640 },
           height: { ideal: 480 }
         }
@@ -102,7 +126,8 @@ export default function QrScanner() {
       
       setIsCameraActive(true);
       setIsScanning(true);
-      setIsProcessingQR(false); // Reset processing flag
+      setIsProcessingQR(false);
+      setCapturedImage(null); // Clear any previous captured image
       
       // Start scanning loop
       scanIntervalRef.current = window.setInterval(scanFrame, 100);
@@ -123,13 +148,11 @@ export default function QrScanner() {
 
   // Stop camera completely
   const stopCamera = () => {
-    // Stop the scanning interval first
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
     }
     
-    // Stop all media tracks
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(track => {
         track.stop();
@@ -137,7 +160,6 @@ export default function QrScanner() {
       streamRef.current = null;
     }
     
-    // Clear video source
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
@@ -149,35 +171,38 @@ export default function QrScanner() {
 
   // Process detected QR code
   const processDetectedQR = async (qrData: string) => {
-    // Prevent processing the same QR multiple times
     if (isProcessingQR) return;
     
     setIsProcessingQR(true);
     
-    // Stop camera immediately after detection
+    // **KEY FIX: Capture the current frame before stopping camera**
+    const capturedFrame = captureVideoFrame();
+    if (capturedFrame) {
+      setCapturedImage(capturedFrame);
+    }
+    
+    // Stop camera after capturing the frame
     stopCamera();
     
     const type = detectQRType(qrData);
     setScannedData(qrData);
     setQrType(type);
     
-    // Add to history if not already present
     setScanHistory(prev => {
       if (!prev.includes(qrData)) {
-        return [qrData, ...prev.slice(0, 9)]; // Keep last 10
+        return [qrData, ...prev.slice(0, 9)];
       }
       return prev;
     });
     
     toast({
       title: `${type} QR Code Detected!`,
-      description: "Camera stopped. QR code successfully scanned.",
+      description: "Image captured and camera stopped. QR code successfully scanned.",
     });
   };
 
   // Scan current video frame
   const scanFrame = async () => {
-    // Don't scan if already processing a QR code
     if (!videoRef.current || !canvasRef.current || !isCameraActive || isProcessingQR) {
       return;
     }
@@ -195,12 +220,10 @@ export default function QrScanner() {
       
       if (imageData) {
         try {
-          // You'll need to install jsQR: npm install jsqr
           const jsQR = (await import('jsqr')).default;
           const code = jsQR(imageData.data, imageData.width, imageData.height);
           
           if (code && code.data && code.data.trim() !== '') {
-            // Process the detected QR code
             await processDetectedQR(code.data);
           }
         } catch (error) {
@@ -217,6 +240,7 @@ export default function QrScanner() {
       setFile(selectedFile);
       setScannedData("");
       setQrType("");
+      setCapturedImage(null); // Clear captured image when uploading new file
     } else {
       toast({
         title: "Invalid file type",
@@ -300,6 +324,7 @@ export default function QrScanner() {
     setScannedData("");
     setQrType("");
     setIsProcessingQR(false);
+    setCapturedImage(null); // Clear captured image
     startCamera();
   };
 
@@ -380,13 +405,23 @@ export default function QrScanner() {
             
             <div className="space-y-4">
               <div className="aspect-video bg-black rounded-lg overflow-hidden relative">
-                <video
-                  ref={videoRef}
-                  className="w-full h-full object-cover"
-                  playsInline
-                  muted
-                />
-                {!isCameraActive && (
+                {/* Show captured image when QR is detected, otherwise show video */}
+                {capturedImage ? (
+                  <img
+                    src={capturedImage}
+                    alt="Captured QR Code"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <video
+                    ref={videoRef}
+                    className="w-full h-full object-cover"
+                    playsInline
+                    muted
+                  />
+                )}
+                
+                {!isCameraActive && !capturedImage && (
                   <div className="absolute inset-0 flex items-center justify-center text-white">
                     <div className="text-center">
                       <Smartphone className="w-12 h-12 mx-auto mb-2 opacity-50" />
@@ -394,10 +429,19 @@ export default function QrScanner() {
                     </div>
                   </div>
                 )}
-                {isCameraActive && isScanning && (
+                
+                {isCameraActive && isScanning && !capturedImage && (
                   <div className="absolute top-4 left-4 right-4">
                     <div className="bg-black/50 text-white px-3 py-1 rounded-full text-sm text-center">
                       🔍 Scanning for QR codes...
+                    </div>
+                  </div>
+                )}
+
+                {capturedImage && (
+                  <div className="absolute top-4 left-4 right-4">
+                    <div className="bg-green-600/80 text-white px-3 py-1 rounded-full text-sm text-center">
+                      ✅ QR Code Captured!
                     </div>
                   </div>
                 )}
