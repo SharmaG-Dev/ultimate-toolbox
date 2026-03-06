@@ -16,6 +16,8 @@ import PdfToImages from "./pages/tools/PdfToImages";
 import ImagesToPdf from "./pages/tools/ImagesToPdf";
 import MergePdfs from "./pages/tools/MergePdfs";
 import SplitPdf from "./pages/tools/SplitPdf";
+import WordToPdf from "./pages/tools/WordToPdf";
+import PdfToWord from "./pages/tools/PdfToWord"; // Import the new tool
 
 // Image Tools  
 import ImageFormatConverter from "./pages/tools/ImageFormatConverter";
@@ -35,7 +37,6 @@ import WordCounter from "./pages/tools/WordCounter";
 // Online Tools
 import CurrencyConverter from "./pages/tools/CurrencyConverter";
 import UnitConverter from "./pages/tools/UnitConverter";
-import WordToPdf from "./pages/tools/WordToPdf";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,7 @@ const App = () => (
           <Route path="/tools/merge-pdfs" element={<MergePdfs />} />
           <Route path="/tools/split-pdf" element={<SplitPdf />} />
           <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
+          <Route path="/tools/pdf-to-word" element={<PdfToWord />} /> {/* Add the new route */}
           
           {/* Image Tool Routes */}
           <Route path="/tools/image-format-converter" element={<ImageFormatConverter />} />

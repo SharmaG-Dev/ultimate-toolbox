@@ -6,13 +6,20 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, Download, Zap, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, Zap, RefreshCw, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import mammoth from "mammoth";
-import html2pdf from "html2pdf.js";
+import { Document, Packer, Paragraph, TextRun } from 'docx';
+import { saveAs } from 'file-saver';
 
-export default function WordToPdfConverter() {
+// Use the stable build for pdf.js and configure the worker from a CDN
+import * as pdfjsLib from 'pdfjs-dist/build/pdf.min.mjs';
+
+if (typeof window !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
+}
+
+export default function PdfToWordConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -23,16 +30,16 @@ export default function WordToPdfConverter() {
 
   const validateFile = (file: File): { valid: boolean; message?: string } => {
     const maxSize = 50 * 1024 * 1024; // 50MB
-    const supportedTypes = [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
-    ];
+    const supportedTypes = ['application/pdf'];
+
     if (!supportedTypes.includes(file.type)) {
-      return { valid: false, message: 'Only .doc and .docx files are supported.' };
+      return { valid: false, message: 'Only .pdf files are supported.' };
     }
+
     if (file.size > maxSize) {
-      return { valid: false, message: 'File size must be less than 50MB.' };
+      return { valid: false, message: `File size must be less than ${maxSize / 1024 / 1024}MB.` };
     }
+
     return { valid: true };
   };
 
@@ -49,6 +56,7 @@ export default function WordToPdfConverter() {
       });
       return;
     }
+
     setFile(selectedFile);
     toast({
       title: "File Ready",
@@ -56,67 +64,94 @@ export default function WordToPdfConverter() {
     });
   }, [toast]);
 
-  const convertToPdf = useCallback(async () => {
+  const convertToDocx = useCallback(async () => {
     if (!file) return;
 
     setIsProcessing(true);
+    setProcessingStep("Initializing conversion...");
     setProgress(10);
-    setProcessingStep("Reading document...");
 
     try {
       const arrayBuffer = await file.arrayBuffer();
+      setProcessingStep("Reading PDF document...");
       setProgress(30);
-      setProcessingStep("Converting to HTML...");
-      
-      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-      
-      setProgress(60);
-      setProcessingStep("Generating PDF...");
 
-      const pdfContent = document.createElement('div');
-      pdfContent.innerHTML = html;
+      const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+      const numPages = pdf.numPages;
+      const docChildren: Paragraph[] = [];
 
-      const pdfOptions = {
-        margin: 15,
-        filename: file.name.replace(/\.(docx?|DOCX?)$/, '.pdf'),
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            const style = clonedDoc.createElement('style');
-            style.textContent = `
-              body {
-                color: black !important;
-              }
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            `;
-            clonedDoc.head.appendChild(style);
+      for (let i = 1; i <= numPages; i++) {
+        setProcessingStep(`Processing page ${i} of ${numPages}...`);
+        setProgress(30 + (i / numPages) * 60);
+
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+
+        // Intelligent paragraph and line break reconstruction
+        let lastY = -1;
+        let currentLine: TextRun[] = [];
+
+        textContent.items.forEach((item: any, index) => {
+          if ('str' in item && item.str.trim().length > 0) {
+            const currentY = item.transform[5];
+
+            if (lastY !== -1 && Math.abs(currentY - lastY) > 5) {
+              // A significant vertical jump indicates a new line/paragraph.
+              docChildren.push(new Paragraph({ children: currentLine }));
+              currentLine = [];
+            }
+            
+            currentLine.push(new TextRun(item.str));
+            lastY = currentY;
           }
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
-      };
 
-      await html2pdf().from(pdfContent).set(pdfOptions).save();
+          // Add the last line on the page
+          if (index === textContent.items.length - 1 && currentLine.length > 0) {
+            docChildren.push(new Paragraph({ children: currentLine }));
+          }
+        });
+
+        // Add a space between pages
+        if (i < numPages) {
+            docChildren.push(new Paragraph(""));
+        }
+      }
+
+      setProcessingStep("Creating Word document...");
+      setProgress(95);
+
+      const doc = new Document({
+        sections: [{
+          children: docChildren,
+        }],
+      });
+
+      const blob = await Packer.toBlob(doc);
+      saveAs(blob, file.name.replace(/\.pdf$/, '.docx'));
       
       setProgress(100);
       setProcessingStep("Conversion successful!");
 
       toast({
-        title: "🎉 PDF Generated!",
-        description: `Your file "${file.name}" has been converted successfully.`,
+        title: "🎉 DOCX Generated!",
+        description: `Your file "${file.name}" has been converted with formatting.`,
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('Conversion Error:', error);
+
+      let errorMessage = "An unknown error occurred during conversion.";
+      if (error.name === 'PasswordException') {
+        errorMessage = 'The PDF file is encrypted and password-protected. This tool cannot process encrypted files.';
+      } else if (error.name === 'InvalidPDFException') {
+        errorMessage = 'The file is not a valid or is a corrupted PDF. Please try a different file.';
+      } else if (error.message && error.message.includes('worker')) {
+        errorMessage = 'The PDF processing engine failed to load. Please try refreshing the page.';
+      }
+
       toast({
         title: "❌ Conversion Failed",
-        description: "Something went wrong. Please try another file.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -136,8 +171,8 @@ export default function WordToPdfConverter() {
 
   return (
     <PageLayout
-      title="Word to PDF Converter"
-      description="Easily convert your Word documents to high-quality PDFs."
+      title="PDF to Word Converter"
+      description="Easily convert your PDF documents into editable Word files. This tool extracts text content."
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
@@ -147,16 +182,16 @@ export default function WordToPdfConverter() {
             </div>
             
             <div>
-              <h3 className="text-xl font-bold">Upload Your Word Document</h3>
+              <h3 className="text-xl font-bold">Upload Your PDF Document</h3>
               <p className="text-muted-foreground">
-                Supports .doc & .docx files. Your files are processed locally and are secure.
+                Supports .pdf files. Your files are processed locally and securely in your browser.
               </p>
             </div>
 
             <Input
               ref={inputRef}
               type="file"
-              accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept="application/pdf"
               onChange={handleFileChange}
               className="max-w-md mx-auto"
               disabled={isProcessing}
@@ -177,9 +212,9 @@ export default function WordToPdfConverter() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={convertToPdf} className="gap-2">
+                <Button onClick={convertToDocx} className="gap-2">
                   <Zap className="w-4 h-4" />
-                  Convert to PDF
+                  Convert to Word
                 </Button>
                 <Button variant="outline" onClick={reset} className="gap-2">
                   <RefreshCw className="w-4 h-4" />
@@ -206,7 +241,7 @@ export default function WordToPdfConverter() {
             <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                Please select a Word document to begin the conversion process.
+                Please select a PDF document to begin the conversion process.
                 </AlertDescription>
             </Alert>
         )}

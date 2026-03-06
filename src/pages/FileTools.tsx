@@ -10,43 +10,50 @@ import {
   Split,
   Merge
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const fileTools = [
   {
     title: "PDF to Images",
     description: "Convert PDF pages to individual images (JPG, PNG)",
     icon: FileImage,
+    path: "/tools/pdf-to-images",
     comingSoon: false
   },
   {
     title: "Images to PDF", 
     description: "Combine multiple images into a single PDF",
     icon: FilePlus2,
+    path: "/tools/images-to-pdf",
     comingSoon: false
   },
   {
     title: "Merge PDFs",
     description: "Combine multiple PDF files into one",
     icon: Merge,
+    path: "/tools/merge-pdfs",
     comingSoon: false
   },
   {
     title: "Split PDF",
     description: "Split a PDF into separate pages or sections",
     icon: Split,
+    path: "/tools/split-pdf",
     comingSoon: false
   },
   {
     title: "Word to PDF",
     description: "Convert Word documents to PDF format",
     icon: FileText,
+    path: "/tools/word-to-pdf",
     comingSoon: false
   },
   {
     title: "PDF to Word",
     description: "Convert PDF files to editable Word documents",
     icon: FileText,
-    comingSoon: true
+    path: "/tools/pdf-to-word",
+    comingSoon: false
   },
   {
     title: "Excel to PDF",
@@ -69,6 +76,8 @@ const fileTools = [
 ];
 
 export default function FileTools() {
+  const navigate = useNavigate();
+
   return (
     <PageLayout
       title="📄 File Tools"
@@ -83,7 +92,7 @@ export default function FileTools() {
             icon={tool.icon}
             category="file"
             comingSoon={tool.comingSoon}
-            onClick={() => tool.comingSoon ? null : console.log(`Opening ${tool.title}`)}
+            onClick={() => !tool.comingSoon && tool.path && navigate(tool.path)}
           />
         ))}
       </div>
