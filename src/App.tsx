@@ -1,8 +1,11 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from 'react-helmet-async';
+
 import Index from "./pages/Index";
 import FileTools from "./pages/FileTools";
 import ImageTools from "./pages/ImageTools";
@@ -44,55 +47,57 @@ import UnitConverter from "./pages/tools/UnitConverter";
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/file-tools" element={<FileTools />} />
-          <Route path="/image-tools" element={<ImageTools />} />
-          <Route path="/audio-video" element={<AudioVideoTools />} />
-          <Route path="/text-tools" element={<TextTools />} />
-          <Route path="/online-tools" element={<OnlineTools />} />
-          
-          {/* File Tool Routes */}
-          <Route path="/tools/pdf-to-images" element={<PdfToImages />} />
-          <Route path="/tools/images-to-pdf" element={<ImagesToPdf />} />
-          <Route path="/tools/merge-pdfs" element={<MergePdfs />} />
-          <Route path="/tools/split-pdf" element={<SplitPdf />} />
-          <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
-          <Route path="/tools/pdf-to-word" element={<PdfToWord />} />
-          <Route path="/tools/excel-to-pdf" element={<ExcelToPdf />} />
-          <Route path="/tools/pdf-to-excel" element={<PdfToExcel />} />
-          <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdf />} />
-          
-          {/* Image Tool Routes */}
-          <Route path="/tools/image-format-converter" element={<ImageFormatConverter />} />
-          <Route path="/tools/image-crop" element={<ImageCrop />} />
-          <Route path="/tools/background-remover" element={<BackgroundRemover />} />
-          <Route path="/tools/color-picker" element={<ColorPicker />} />
-          <Route path="/tools/rotate-flip" element={<RotateFlip />} />
-          
-          {/* Text Tool Routes */}
-          <Route path="/tools/text-to-pdf" element={<TextToPdf />} />
-          <Route path="/tools/qr-generator" element={<QrGenerator />} />
-          <Route path="/tools/qr-scanner" element={<QrScanner />} />
-          <Route path="/tools/password-generator" element={<PasswordGenerator />} />
-          <Route path="/tools/text-case-converter" element={<TextCaseConverter />} />
-          <Route path="/tools/word-counter" element={<WordCounter />} />
-          
-          {/* Online Tool Routes */}
-          <Route path="/tools/currency-converter" element={<CurrencyConverter />} />
-          <Route path="/tools/unit-converter" element={<UnitConverter />} />
-          
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/file-tools" element={<FileTools />} />
+            <Route path="/image-tools" element={<ImageTools />} />
+            <Route path="/audio-video" element={<AudioVideoTools />} />
+            <Route path="/text-tools" element={<TextTools />} />
+            <Route path="/online-tools" element={<OnlineTools />} />
+            
+            {/* File Tool Routes */}
+            <Route path="/tools/pdf-to-images" element={<PdfToImages />} />
+            <Route path="/tools/images-to-pdf" element={<ImagesToPdf />} />
+            <Route path="/tools/merge-pdfs" element={<MergePdfs />} />
+            <Route path="/tools/split-pdf" element={<SplitPdf />} />
+            <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
+            <Route path="/tools/pdf-to-word" element={<PdfToWord />} />
+            <Route path="/tools/excel-to-pdf" element={<ExcelToPdf />} />
+            <Route path="/tools/pdf-to-excel" element={<PdfToExcel />} />
+            <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdf />} />
+            
+            {/* Image Tool Routes */}
+            <Route path="/tools/image-format-converter" element={<ImageFormatConverter />} />
+            <Route path="/tools/image-crop" element={<ImageCrop />} />
+            <Route path="/tools/background-remover" element={<BackgroundRemover />} />
+            <Route path="/tools/color-picker" element={<ColorPicker />} />
+            <Route path="/tools/rotate-flip" element={<RotateFlip />} />
+            
+            {/* Text Tool Routes */}
+            <Route path="/tools/text-to-pdf" element={<TextToPdf />} />
+            <Route path="/tools/qr-generator" element={<QrGenerator />} />
+            <Route path="/tools/qr-scanner" element={<QrScanner />} />
+            <Route path="/tools/password-generator" element={<PasswordGenerator />} />
+            <Route path="/tools/text-case-converter" element={<TextCaseConverter />} />
+            <Route path="/tools/word-counter" element={<WordCounter />} />
+            
+            {/* Online Tool Routes */}
+            <Route path="/tools/currency-converter" element={<CurrencyConverter />} />
+            <Route path="/tools/unit-converter" element={<UnitConverter />} />
+            
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

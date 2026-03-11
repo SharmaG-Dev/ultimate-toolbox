@@ -81,7 +81,32 @@ export default function ExcelToPdfConverter() {
         margin: 10,
         filename: file.name.replace(/\.(xlsx?|XLSX?)$/, '.pdf'),
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        html2canvas: { 
+            scale: 2, 
+            useCORS: true,
+            onclone: (clonedDoc: Document) => {
+                const style = clonedDoc.createElement('style');
+                style.textContent = `
+                  body { 
+                    color: black !important; 
+                  }
+                  table, th, td { 
+                    border: 1px solid black !important; 
+                    border-collapse: collapse !important; 
+                    padding: 8px !important; /* Increased padding */
+                    text-align: left !important; /* Align text to the left */
+                  }
+                  th {
+                    background-color: #f2f2f2 !important; /* Light grey background for headers */
+                  }
+                  * { 
+                    -webkit-print-color-adjust: exact !important; 
+                    print-color-adjust: exact !important; 
+                  }
+                `;
+                clonedDoc.head.appendChild(style);
+            }
+        },
         jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' as const },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
       };

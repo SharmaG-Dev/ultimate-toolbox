@@ -6,13 +6,13 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Upload, FileText, Download, Zap, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
+import { Upload, FileText, Download, Zap, RefreshCw, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import * as XLSX from "xlsx";
+import Tesseract from 'tesseract.js';
 
-// Set workerSrc to load pdf.worker.js from a CDN
 GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`;
 
 export default function PdfToExcelConverter() {
@@ -59,28 +59,61 @@ export default function PdfToExcelConverter() {
     if (!file) return;
 
     setIsProcessing(true);
-    setProgress(10);
-    setProcessingStep("Reading PDF file...");
+    setProgress(0);
+    setProcessingStep("Initializing...");
 
     try {
+      const worker = await Tesseract.createWorker({
+        logger: m => {
+          const p = Math.floor(m.progress * 100);
+          if (m.status === 'loading' || m.status === 'downloading') {
+            setProcessingStep(`First-time setup: ${m.status} OCR engine... ${p}%`);
+            setProgress(p * 0.2); // Initial setup is 20% of the total time
+          } else if (m.status.startsWith('loading language')) {
+            setProcessingStep(`Loading language model... ${p}%`);
+            setProgress(20 + p * 0.1); // Language model is 10%
+          } else if (m.status === 'initializing') {
+            setProcessingStep(`Initializing OCR engine... ${p}%`);
+            setProgress(30);
+          } else if (m.status === 'recognizing text') {
+            setProcessingStep(`Recognizing text... ${p}%`);
+            setProgress(30 + p * 0.6); // Recognition is 60%
+          }
+        },
+      });
+
+      await worker.loadLanguage('eng');
+      await worker.initialize('eng');
+
       const arrayBuffer = await file.arrayBuffer();
       const pdf = await getDocument(arrayBuffer).promise;
       const numPages = pdf.numPages;
       let fullText = '';
 
+      setProgress(90); 
+      setProcessingStep("Reading PDF document...");
+
       for (let i = 1; i <= numPages; i++) {
-        setProgress(10 + Math.floor((i / numPages) * 70));
-        setProcessingStep(`Processing page ${i} of ${numPages}...`);
         const page = await pdf.getPage(i);
-        const textContent = await page.getTextContent();
-        const pageText = textContent.items.map((s: any) => s.str).join(' ');
-        fullText += pageText + '\n\n';
+        const viewport = page.getViewport({ scale: 2.0 });
+        const canvas = document.createElement('canvas');
+        const context = canvas.getContext('2d')!;
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        await page.render({ canvasContext: context, viewport: viewport }).promise;
+        
+        const { data: { text } } = await worker.recognize(canvas);
+        fullText += text + '\n\n';
       }
+      
+      await worker.terminate();
 
-      setProgress(90);
-      setProcessingStep("Converting to Excel...");
+      setProgress(95);
+      setProcessingStep("Finalizing Excel file...");
 
-      const lines = fullText.split('\n').map(line => line.split(/\s+/));
+      const lines = fullText.split('\n').filter(line => line.trim() !== '').map(line => line.trim().split(/\s+/));
+      
       const ws = XLSX.utils.aoa_to_sheet(lines);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
@@ -92,14 +125,14 @@ export default function PdfToExcelConverter() {
 
       toast({
         title: "🎉 Excel File Generated!",
-        description: `Your file "${file.name}" has been converted successfully.`,
+        description: `Your file has been converted with OCR.`,
       });
 
     } catch (error) {
       console.error('Conversion Error:', error);
       toast({
         title: "❌ Conversion Failed",
-        description: "Could not extract text from PDF. The PDF may be an image or have complex formatting.",
+        description: "OCR processing failed. This could be due to a network issue or a problem with the PDF file.",
         variant: "destructive",
       });
     } finally {
@@ -120,7 +153,7 @@ export default function PdfToExcelConverter() {
   return (
     <PageLayout
       title="PDF to Excel Converter"
-      description="Extract text from your PDFs and convert it into an Excel spreadsheet."
+      description="Extract tables and text from your PDFs (including scans) into an Excel spreadsheet using OCR."
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
@@ -132,7 +165,7 @@ export default function PdfToExcelConverter() {
             <div>
               <h3 className="text-xl font-bold">Upload Your PDF Document</h3>
               <p className="text-muted-foreground">
-                Supports .pdf files. Text-based PDFs work best.
+                Now with OCR support for scanned and image-based PDFs.
               </p>
             </div>
 
@@ -174,15 +207,18 @@ export default function PdfToExcelConverter() {
         )}
 
         {isProcessing && (
-          <Card className="p-4">
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">{processingStep}</span>
-                <span className="text-muted-foreground">{progress}%</span>
-              </div>
-              <Progress value={progress} className="h-2" />
-            </div>
-          </Card>
+            <Card className="p-4">
+                <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 font-medium">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>{processingStep}</span>
+                    </div>
+                    <span className="text-muted-foreground">{progress}%</span>
+                </div>
+                <Progress value={progress} className="h-2" />
+                </div>
+            </Card>
         )}
 
         {!file && (
