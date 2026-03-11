@@ -152,8 +152,9 @@ export default function PdfToExcelConverter() {
 
   return (
     <PageLayout
-      title="PDF to Excel Converter"
-      description="Extract tables and text from your PDFs (including scans) into an Excel spreadsheet using OCR."
+      title="Free PDF to Excel Converter with OCR"
+      description="Easily convert your PDF documents, including scanned files, into editable Excel spreadsheets. Our free online tool uses advanced OCR to accurately extract tables and text."
+      keywords="PDF to Excel, convert PDF to Excel, PDF to XLS, free PDF converter, OCR converter, scanned PDF to Excel, extract tables from PDF"
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
