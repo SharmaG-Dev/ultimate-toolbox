@@ -9,10 +9,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, Download, Zap, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import mammoth from "mammoth";
+import * as XLSX from "xlsx";
 import html2pdf from "html2pdf.js";
 
-export default function WordToPdfConverter() {
+export default function ExcelToPdfConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -24,11 +24,11 @@ export default function WordToPdfConverter() {
   const validateFile = (file: File): { valid: boolean; message?: string } => {
     const maxSize = 50 * 1024 * 1024; // 50MB
     const supportedTypes = [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      'application/vnd.ms-excel'
     ];
     if (!supportedTypes.includes(file.type)) {
-      return { valid: false, message: 'Only .doc and .docx files are supported.' };
+      return { valid: false, message: 'Only .xls and .xlsx files are supported.' };
     }
     if (file.size > maxSize) {
       return { valid: false, message: 'File size must be less than 50MB.' };
@@ -61,15 +61,16 @@ export default function WordToPdfConverter() {
 
     setIsProcessing(true);
     setProgress(10);
-    setProcessingStep("Reading document...");
+    setProcessingStep("Reading Excel file...");
 
     try {
       const arrayBuffer = await file.arrayBuffer();
-      setProgress(30);
-      setProcessingStep("Converting to HTML...");
-      
-      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-      
+      const data = new Uint8Array(arrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const html = XLSX.utils.sheet_to_html(worksheet);
+
       setProgress(60);
       setProcessingStep("Generating PDF...");
 
@@ -77,28 +78,11 @@ export default function WordToPdfConverter() {
       pdfContent.innerHTML = html;
 
       const pdfOptions = {
-        margin: 15,
-        filename: file.name.replace(/\.(docx?|DOCX?)$/, '.pdf'),
+        margin: 10,
+        filename: file.name.replace(/\.(xlsx?|XLSX?)$/, '.pdf'),
         image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            const style = clonedDoc.createElement('style');
-            style.textContent = `
-              body {
-                color: black !important;
-              }
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            `;
-            clonedDoc.head.appendChild(style);
-          }
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
+        html2canvas: { scale: 2, useCORS: true },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' as const },
         pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
       };
 
@@ -136,8 +120,8 @@ export default function WordToPdfConverter() {
 
   return (
     <PageLayout
-      title="Word to PDF Converter"
-      description="Easily convert your Word documents to high-quality PDFs."
+      title="Excel to PDF Converter"
+      description="Easily convert your Excel spreadsheets to high-quality PDFs."
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
@@ -147,16 +131,16 @@ export default function WordToPdfConverter() {
             </div>
             
             <div>
-              <h3 className="text-xl font-bold">Upload Your Word Document</h3>
+              <h3 className="text-xl font-bold">Upload Your Excel Spreadsheet</h3>
               <p className="text-muted-foreground">
-                Supports .doc & .docx files. Your files are processed locally and are secure.
+                Supports .xls & .xlsx files. Your files are processed locally and are secure.
               </p>
             </div>
 
             <Input
               ref={inputRef}
               type="file"
-              accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".xls,.xlsx,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={handleFileChange}
               className="max-w-md mx-auto"
               disabled={isProcessing}
@@ -206,7 +190,7 @@ export default function WordToPdfConverter() {
             <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                Please select a Word document to begin the conversion process.
+                Please select an Excel file to begin the conversion process.
                 </AlertDescription>
             </Alert>
         )}

@@ -59,19 +59,22 @@ const fileTools = [
     title: "Excel to PDF",
     description: "Convert Excel spreadsheets to PDF format",
     icon: Table,
-    comingSoon: true
+    path: "/tools/excel-to-pdf",
+    comingSoon: false
   },
   {
     title: "PDF to Excel",
     description: "Extract data from PDF to Excel format",
     icon: Table,
-    comingSoon: true
+    path: "/tools/pdf-to-excel",
+    comingSoon: false
   },
   {
     title: "PowerPoint to PDF",
     description: "Convert PowerPoint presentations to PDF",
     icon: Presentation,
-    comingSoon: true
+    path: "/tools/powerpoint-to-pdf",
+    comingSoon: false
   }
 ];
 

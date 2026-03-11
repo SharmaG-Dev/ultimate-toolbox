@@ -17,7 +17,10 @@ import ImagesToPdf from "./pages/tools/ImagesToPdf";
 import MergePdfs from "./pages/tools/MergePdfs";
 import SplitPdf from "./pages/tools/SplitPdf";
 import WordToPdf from "./pages/tools/WordToPdf";
-import PdfToWord from "./pages/tools/PdfToWord"; // Import the new tool
+import PdfToWord from "./pages/tools/PdfToWord";
+import ExcelToPdf from "./pages/tools/ExcelToPdf";
+import PdfToExcel from "./pages/tools/PdfToExcel";
+import PowerpointToPdf from "./pages/tools/PowerpointToPdf";
 
 // Image Tools  
 import ImageFormatConverter from "./pages/tools/ImageFormatConverter";
@@ -60,7 +63,10 @@ const App = () => (
           <Route path="/tools/merge-pdfs" element={<MergePdfs />} />
           <Route path="/tools/split-pdf" element={<SplitPdf />} />
           <Route path="/tools/word-to-pdf" element={<WordToPdf />} />
-          <Route path="/tools/pdf-to-word" element={<PdfToWord />} /> {/* Add the new route */}
+          <Route path="/tools/pdf-to-word" element={<PdfToWord />} />
+          <Route path="/tools/excel-to-pdf" element={<ExcelToPdf />} />
+          <Route path="/tools/pdf-to-excel" element={<PdfToExcel />} />
+          <Route path="/tools/powerpoint-to-pdf" element={<PowerpointToPdf />} />
           
           {/* Image Tool Routes */}
           <Route path="/tools/image-format-converter" element={<ImageFormatConverter />} />

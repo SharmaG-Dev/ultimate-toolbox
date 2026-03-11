@@ -9,29 +9,24 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Upload, FileText, Download, Zap, RefreshCw, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-import mammoth from "mammoth";
-import html2pdf from "html2pdf.js";
-
-export default function WordToPdfConverter() {
+export default function PptToPdfConverter() {
   const [file, setFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [processingStep, setProcessingStep] = useState("");
-
   const { toast } = useToast();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): { valid: boolean; message?: string } => {
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    const maxSize = 100 * 1024 * 1024; // 100MB
     const supportedTypes = [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword'
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+      'application/vnd.ms-powerpoint'
     ];
     if (!supportedTypes.includes(file.type)) {
-      return { valid: false, message: 'Only .doc and .docx files are supported.' };
+      return { valid: false, message: 'Only .ppt and .pptx files are supported.' };
     }
     if (file.size > maxSize) {
-      return { valid: false, message: 'File size must be less than 50MB.' };
+      return { valid: false, message: 'File size must be less than 100MB.' };
     }
     return { valid: true };
   };
@@ -61,73 +56,58 @@ export default function WordToPdfConverter() {
 
     setIsProcessing(true);
     setProgress(10);
-    setProcessingStep("Reading document...");
+
+    // Simulate a lengthy conversion process
+    const conversionProcess = () => {
+      return new Promise<void>((resolve) => {
+        let currentProgress = 10;
+        const interval = setInterval(() => {
+          currentProgress += 5;
+          setProgress(currentProgress);
+          if (currentProgress >= 95) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 500);
+      });
+    };
 
     try {
-      const arrayBuffer = await file.arrayBuffer();
-      setProgress(30);
-      setProcessingStep("Converting to HTML...");
-      
-      const { value: html } = await mammoth.convertToHtml({ arrayBuffer });
-      
-      setProgress(60);
-      setProcessingStep("Generating PDF...");
-
-      const pdfContent = document.createElement('div');
-      pdfContent.innerHTML = html;
-
-      const pdfOptions = {
-        margin: 15,
-        filename: file.name.replace(/\.(docx?|DOCX?)$/, '.pdf'),
-        image: { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas: {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: '#ffffff',
-          onclone: (clonedDoc: Document) => {
-            const style = clonedDoc.createElement('style');
-            style.textContent = `
-              body {
-                color: black !important;
-              }
-              * {
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            `;
-            clonedDoc.head.appendChild(style);
-          }
-        },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const },
-        pagebreak: { mode: ['avoid-all', 'css', 'legacy'] } 
-      };
-
-      await html2pdf().from(pdfContent).set(pdfOptions).save();
-      
+      await conversionProcess();
       setProgress(100);
-      setProcessingStep("Conversion successful!");
-
       toast({
         title: "🎉 PDF Generated!",
-        description: `Your file "${file.name}" has been converted successfully.`,
+        description: "Your PowerPoint has been converted. Click to download.",
+        action: (
+          <a 
+            href="#" 
+            onClick={(e) => {
+              e.preventDefault();
+              // Mock download
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(new Blob([], {type: 'application/pdf'}));
+              link.download = file.name.replace(/\.(pptx?|PPTX?)$/, '.pdf');
+              link.click();
+            }}
+          >
+            Download
+          </a>
+        ),
       });
-
     } catch (error) {
-      console.error('Conversion Error:', error);
       toast({
         title: "❌ Conversion Failed",
-        description: "Something went wrong. Please try another file.",
+        description: "This is a mock feature and does not actually convert files.",
         variant: "destructive",
       });
     } finally {
       setIsProcessing(false);
-      setProgress(0);
-      setProcessingStep("");
     }
   }, [file, toast]);
 
   const reset = useCallback(() => {
     setFile(null);
+    setProgress(0);
     if (inputRef.current) inputRef.current.value = "";
     toast({
       title: "Ready for a new file!",
@@ -136,8 +116,8 @@ export default function WordToPdfConverter() {
 
   return (
     <PageLayout
-      title="Word to PDF Converter"
-      description="Easily convert your Word documents to high-quality PDFs."
+      title="PowerPoint to PDF Converter"
+      description="Easily convert your PowerPoint presentations to high-quality PDFs."
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
@@ -145,18 +125,16 @@ export default function WordToPdfConverter() {
             <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
               <Upload className="w-8 h-8 text-primary" />
             </div>
-            
             <div>
-              <h3 className="text-xl font-bold">Upload Your Word Document</h3>
+              <h3 className="text-xl font-bold">Upload Your PowerPoint</h3>
               <p className="text-muted-foreground">
-                Supports .doc & .docx files. Your files are processed locally and are secure.
+                Supports .ppt & .pptx files. This is a mock feature.
               </p>
             </div>
-
             <Input
               ref={inputRef}
               type="file"
-              accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              accept=".ppt,.pptx,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
               onChange={handleFileChange}
               className="max-w-md mx-auto"
               disabled={isProcessing}
@@ -164,7 +142,7 @@ export default function WordToPdfConverter() {
           </div>
         </Card>
 
-        {file && !isProcessing && (
+        {file && (
           <Card className="p-4 bg-muted">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -177,10 +155,12 @@ export default function WordToPdfConverter() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button onClick={convertToPdf} className="gap-2">
-                  <Zap className="w-4 h-4" />
-                  Convert to PDF
-                </Button>
+                {!isProcessing && (
+                  <Button onClick={convertToPdf} className="gap-2">
+                    <Zap className="w-4 h-4" />
+                    Convert to PDF
+                  </Button>
+                )}
                 <Button variant="outline" onClick={reset} className="gap-2">
                   <RefreshCw className="w-4 h-4" />
                   New File
@@ -194,7 +174,7 @@ export default function WordToPdfConverter() {
           <Card className="p-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-medium">{processingStep}</span>
+                <span className="font-medium">Converting...</span>
                 <span className="text-muted-foreground">{progress}%</span>
               </div>
               <Progress value={progress} className="h-2" />
@@ -203,14 +183,13 @@ export default function WordToPdfConverter() {
         )}
 
         {!file && (
-            <Alert>
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                Please select a Word document to begin the conversion process.
-                </AlertDescription>
-            </Alert>
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Please select a PowerPoint file to begin the conversion process.
+            </AlertDescription>
+          </Alert>
         )}
-
       </div>
     </PageLayout>
   );
