@@ -116,8 +116,9 @@ export default function PptToPdfConverter() {
 
   return (
     <PageLayout
-      title="PowerPoint to PDF Converter"
-      description="Easily convert your PowerPoint presentations to high-quality PDFs."
+      title="Free PowerPoint to PDF Converter"
+      description="Easily convert your PowerPoint presentations (.ppt, .pptx) to high-quality, shareable PDFs for free. Our online tool is fast, secure, and preserves your slide layouts."
+      keywords="PowerPoint to PDF, convert PPT to PDF, PPTX to PDF, free PDF converter, online presentation to PDF"
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">

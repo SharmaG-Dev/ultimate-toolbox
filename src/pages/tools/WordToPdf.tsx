@@ -136,8 +136,9 @@ export default function WordToPdfConverter() {
 
   return (
     <PageLayout
-      title="Word to PDF Converter"
-      description="Easily convert your Word documents to high-quality PDFs."
+      title="Free Word to PDF Converter"
+      description="Convert your DOC and DOCX files to high-quality PDF documents for free. Our online tool is fast, secure, and preserves your formatting perfectly."
+      keywords="Word to PDF, convert Word to PDF, DOC to PDF, DOCX to PDF, free PDF converter, online Word to PDF"
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">

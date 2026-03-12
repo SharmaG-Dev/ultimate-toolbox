@@ -13,18 +13,17 @@ interface PageLayoutProps {
 
 export const PageLayout = ({ children, title, description, keywords }: PageLayoutProps) => {
   const location = useLocation();
-  // TODO: Replace with your actual domain
-  const siteUrl = "https://your-website.com";
+  const siteUrl = "https://toolbox.mrnow.in";
 
-  const defaultTitle = 'Toolbox: All-in-One Free Online Tools';
-  const defaultDescription = 'A comprehensive collection of free online tools for file conversion, image editing, text manipulation, and more. Fast, secure, and easy to use.';
-  const defaultKeywords = 'online tools, free tools, file converter, image editor, text tools, pdf tools, toolbox, utility tools';
+  const defaultTitle = 'Mrnow Toolbox: Free & Secure Online Tools for Every Need';
+  const defaultDescription = 'Discover Mrnow Toolbox, your all-in-one solution for free online tools. Convert files, edit images, manage text, and more—all securely in your browser.';
+  const defaultKeywords = 'online tools, free tools, file converter, image editor, text tools, pdf tools, Mrnow Toolbox, free online utilities';
 
-  const pageTitle = title ? `${title} | Toolbox` : defaultTitle;
+  const pageTitle = title ? `${title} | Mrnow Toolbox` : defaultTitle;
   const pageDescription = description || defaultDescription;
   const pageKeywords = keywords ? `${defaultKeywords}, ${keywords}` : defaultKeywords;
   const canonicalUrl = `${siteUrl}${location.pathname}`;
-  const imageUrl = `${siteUrl}/social-card.png`; // A general social media card image
+  const imageUrl = `${siteUrl}/social-card.png`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -36,6 +35,7 @@ export const PageLayout = ({ children, title, description, keywords }: PageLayou
 
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Mrnow Toolbox" />
         <meta property="og:url" content={canonicalUrl} />
         <meta property="og:title" content={pageTitle} />
         <meta property="og:description" content={pageDescription} />

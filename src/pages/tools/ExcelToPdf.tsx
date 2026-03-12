@@ -145,8 +145,9 @@ export default function ExcelToPdfConverter() {
 
   return (
     <PageLayout
-      title="Excel to PDF Converter"
-      description="Easily convert your Excel spreadsheets to high-quality PDFs."
+      title="Free Excel to PDF Converter: High-Quality & Secure"
+      description="Convert your Excel files (.xls, .xlsx) to professional, high-quality PDFs for free. Our online tool preserves formatting and ensures your data is presented perfectly. Fast, secure, and easy."
+      keywords="Excel to PDF, convert Excel to PDF, XLS to PDF, XLSX to PDF, free Excel converter, online Excel to PDF"
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">

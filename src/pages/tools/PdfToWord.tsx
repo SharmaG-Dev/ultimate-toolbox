@@ -171,8 +171,9 @@ export default function PdfToWordConverter() {
 
   return (
     <PageLayout
-      title="PDF to Word Converter"
-      description="Easily convert your PDF documents into editable Word files. This tool extracts text content."
+      title="Free PDF to Word Converter (DOCX)"
+      description="Convert your PDFs into editable Word documents (.docx) for free. Our tool accurately extracts text, preserving the layout. Secure and in-browser."
+      keywords="PDF to Word, convert PDF to Word, PDF to DOCX, free PDF converter, online PDF to Word, extract text from PDF"
     >
       <div className="max-w-3xl mx-auto space-y-6">
         <Card className="p-8 border-2 border-dashed hover:border-primary transition-colors">
